@@ -8,12 +8,12 @@ module memory (
     reg [7:0] mem [0:255];
 
     //add testing
-    initial begin
+    /*initial begin
         mem[0] = 8'b00010001; // LDI R0, 1
         mem[1] = 8'b00010101; // LDI R1, 5
         mem[2] = 8'b00100001; // ADD R0, R1
         mem[3] = 8'b11110000; // HALT
-    end
+    end*/
 
     //branch testing doesn't branch
     /*initial begin
@@ -67,8 +67,8 @@ module memory (
         mem[0] = 8'b00010010; // LDI R0, 2  (0010)
         mem[1] = 8'b00010101; // LDI R1, 5  (0101)
         mem[2] = 8'b01100001; // AND R0, R1 -> 0000
-        mem[3] = 8'b01110001; // OR R0, R1 -> 0111
-        mem[4] = 8'b11110000; // HALT
+        //mem[2] = 8'b01110001; // OR R0, R1 -> 0111
+        mem[3] = 8'b11110000; // HALT
     end*/
 
     /*initial begin
@@ -136,7 +136,7 @@ module memory (
     end*/
 
     //Test for BRC
-    /*initial begin
+    initial begin
         mem[0] = 8'b00010001; // LDI R0, 1
         mem[1] = 8'b00010111; // LDI R1, 7
         mem[2] = 8'b00110000; // SUB R0, R0 => 0, Z=1
@@ -145,6 +145,17 @@ module memory (
         mem[5] = 8'b11010110; // BRC 6 => should jump here due to carry
         mem[6] = 8'b11110000; // HALT (should be executed if branch worked)
         mem[7] = 8'b00010011; // LDI R0, 3 (should be skipped)
+    end
+
+    /*initial begin
+        mem[0] = 8'b00010001; // LDI R0, 1
+        mem[1] = 8'b00010111; // LDI R1, 7
+        mem[2] = 8'b00110000; // SUB R0, R0  => Z bayrağı set olur
+        mem[3] = 8'b10011100; // SLT R0, R1
+        mem[4] = 8'b10001111; // NOT R0
+        mem[5] = 8'b11010110; // BRC 6 (eğer Carry set ise 6'ya zıpla)
+        mem[6] = 8'b11110000; // HALT
+
     end*/
 
 

@@ -43,8 +43,8 @@ module top (
         .halt(halt)
     );
 
-    assign led_out = result_out[3:0];
-    //assign led_out = halt ? 4'b0000 : result_out[3:0];
+    //assign led_out = result_out[3:0];
+    assign led_out = halt ? 4'b0000 : result_out[3:0];
 
 
 endmodule
