@@ -1,31 +1,41 @@
-module alu (
-    input  wire [7:0] a,
-    input  wire [7:0] b,
-    input  wire [2:0] alu_op,
-    output reg  [7:0] result,
-    output wire       zero,
-    output wire       negative,
-    output wire       carry_out
+module alu(
+    input  wire [31:0] a,
+    input  wire [31:0] b,
+    input  wire [3:0]  alu_op,   // encoded ALU operation
+    output reg  [31:0] result,
+    output wire        eq,       // a == b
+    output wire        lt_signed // a < b (signed)
 );
 
-    reg [8:0] temp; // extra bit for carry
+    // ALU op encoding (suggested)
+    localparam OP_ADD  = 4'h0;
+    localparam OP_SUB  = 4'h1;
+    localparam OP_AND  = 4'h2;
+    localparam OP_OR   = 4'h3;
+    localparam OP_XOR  = 4'h4;
+    localparam OP_SLL  = 4'h5;
+    localparam OP_SRL  = 4'h6;
+    localparam OP_SRA  = 4'h7;
+    localparam OP_SLT  = 4'h8; // signed set less than
+    localparam OP_SLTU = 4'h9; // unsigned set less than
 
     always @(*) begin
         case (alu_op)
-            3'b000: temp = a + b;             // ADD
-            3'b001: temp = {1'b0, a} - b;     // SUB
-            3'b010: temp = {1'b0, a & b};     // AND
-            3'b011: temp = {1'b0, a | b};     // OR
-            3'b100: temp = {1'b0, ~a};        // NOT
-            3'b101: temp = {8'b0, (a < b)};   // SLT
-            3'b110: temp = {1'b0, a << 1};    // SHL
-            3'b111: temp = {1'b0, a >> 1};    // SHR
-            default: temp = 9'b0;
+            OP_ADD:  result = a + b;
+            OP_SUB:  result = a - b;
+            OP_AND:  result = a & b;
+            OP_OR:   result = a | b;
+            OP_XOR:  result = a ^ b;
+            OP_SLL:  result = a << b[4:0];
+            OP_SRL:  result = a >> b[4:0];
+            OP_SRA:  result = $signed(a) >>> b[4:0];
+            OP_SLT:  result = ($signed(a) < $signed(b)) ? 32'd1 : 32'd0;
+            OP_SLTU: result = (a < b) ? 32'd1 : 32'd0;
+            default: result = 32'd0;
         endcase
-        result = temp[7:0];
     end
 
-    assign zero = (result == 8'd0);
-    assign negative = result[7];
-    assign carry_out = temp[8];
+    assign eq = (a == b);
+    assign lt_signed = ($signed(a) < $signed(b));
+
 endmodule
