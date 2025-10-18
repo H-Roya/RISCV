@@ -58,7 +58,7 @@ module top_single (
         .ra1(rs1),
         .ra2(rs2),
         .wa(rd),
-        .wd( /* driven below */ wb_data ),
+        .wd(wb_data),
         .rd1(rd1),
         .rd2(rd2)
     );
@@ -115,12 +115,8 @@ module top_single (
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             pc <= 32'd0;
-            // Optionally zero-initialize instr_rom and dmem in TB
         end else begin
             pc <= pc_next;
         end
     end
-
-    // Expose instr_rom and data mem initialization to TB via hierarchical referencing
-    // (In TB we'll write to top_single.instr_rom and top_single.<dmem internal name> if needed)
 endmodule

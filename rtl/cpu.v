@@ -28,23 +28,15 @@ module cpu (
     wire        jalr;
     wire        is_lui;
 
-    // instruction fetch (word addressed)
-    // For simplicity, use an internal memory module instance that returns 32-bit instruction
-    // memory addr = pc (byte-addressed), memory uses addr[31:2] internally
     memory mem0 (
         .clk(clk),
-        .mem_read(1'b0),  // instruction fetch uses direct combinational read via internal access below
+        .mem_read(1'b0),  
         .mem_write(1'b0),
         .addr(32'd0),
         .write_data(32'd0),
         .read_data() // not used
     );
 
-    // We'll instantiate a second memory instance for data accesses and also use a separate rom array
-    // For simplicity below, create an instruction ROM here (shared mem array would be nicer).
-    // To keep modules separated, create a simple instr_rom inside cpu (reg array) for fetch.
-
-    // Simple instruction ROM (small): you can modify its initial block in TB by writing into memory.mem
     reg [31:0] instr_rom [0:1023];
     assign instr = instr_rom[pc[31:2]];
 
@@ -60,9 +52,6 @@ module cpu (
         .rd1(rd1),
         .rd2(rd2)
     );
-
-    // BUT: we must break dependency: WB value may come from ALU or memory or PC+4 (for jal/jalr/lui)
-    // We'll create wires and compute wb_data below.
 
     // instantiate control and imm_gen
     wire        dummy_reg_write;
@@ -147,9 +136,5 @@ module cpu (
         else if (jal || jalr) wb_data = wb_from_pc4;
         else wb_data = wb_from_alu;
     end
-
-    // NOTE: regfile write had been wired earlier but used wb_data; however regfile instance used a direct connection to wd
-    // To resolve order, we'll remove the regfile.wd connection above and use an explicit write port via internal signals.
-    // For clarity in single-file, reinstantiate regfile with a small change: use a write_data signal.
 
 endmodule

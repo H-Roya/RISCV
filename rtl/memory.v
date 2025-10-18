@@ -27,5 +27,5 @@ module memory #(
         end
     end
 
-    // simple initializer left to testbench or user; example values can be loaded from TB
+    // example values can be loaded from TB
 endmodule

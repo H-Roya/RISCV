@@ -8,7 +8,7 @@ module control (
     output reg         alu_src,    // 1 => use immediate as ALU b
     output reg [2:0]   imm_sel,    // immediate type for imm_gen
     output reg         branch,     // branch instruction
-    output reg [2:0]   branch_type, // encodes BEQ/BNE/BLT/BGE etc.
+    output reg [2:0]   branch_type, // encodes BEQ/BNE/BLT/BGE 
     output reg         jal,
     output reg         jalr,
     output reg         is_lui
@@ -115,7 +115,7 @@ module control (
                     3'b111: branch_type = BGEU;
                     default: branch_type = BEQ;
                 endcase
-                // for branches we'll use ALU subtract and comparators
+                // for branches using ALU subtract and comparators
                 alu_op = OP_SUB;
             end
             7'b1101111: begin // JAL

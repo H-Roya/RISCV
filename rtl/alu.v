@@ -7,7 +7,6 @@ module alu(
     output wire        lt_signed // a < b (signed)
 );
 
-    // ALU op encoding (suggested)
     localparam OP_ADD  = 4'h0;
     localparam OP_SUB  = 4'h1;
     localparam OP_AND  = 4'h2;
