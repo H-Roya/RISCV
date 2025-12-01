@@ -99,6 +99,7 @@ module top_single (
 
     // writeback selection
     reg [31:0] wb_data;
+    
     always @(*) begin
         if (is_lui) wb_data = imm;
         else if (mem_to_reg) wb_data = dmem_rdata;

@@ -127,7 +127,8 @@ module cpu (
     wire [31:0] wb_from_pc4 = pc + 4;
     wire [31:0] wb_from_lui = imm; // imm already shifted << 12
     reg  [31:0] wb_data;
-    reg  [31:0] rd_from_mem;
+
+    //reg  [31:0] rd_from_mem;
 
     always @(*) begin
         rd_from_mem = wb_from_mem;
