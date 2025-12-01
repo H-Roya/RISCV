@@ -51,6 +51,8 @@ module top_single (
     wire [4:0]  rs2 = instr[24:20];
     wire [4:0]  rd  = instr[11:7];
 
+    reg [31:0] wb_data;
+
     regfile rf (
         .clk(clk),
         .reset(reset),
@@ -98,8 +100,8 @@ module top_single (
                           (branch_taken ? pc_branch : pc_plus4);
 
     // writeback selection
-    reg [31:0] wb_data;
-    
+    //reg [31:0] wb_data;
+
     always @(*) begin
         if (is_lui) wb_data = imm;
         else if (mem_to_reg) wb_data = dmem_rdata;

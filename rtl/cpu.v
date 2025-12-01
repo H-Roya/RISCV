@@ -28,6 +28,21 @@ module cpu (
     wire        jalr;
     wire        is_lui;
 
+    reg [31:0] wb_data;
+    reg [31:0] rd_from_mem;
+
+    reg [31:0] instr_rom [0:1023];
+    initial begin 
+        instr_rom[0] = 32'h00500093; // addi x1, x0, 5
+        instr_rom[1] = 32'h00300113; // addi x2, x0, 3
+        instr_rom[2] = 32'h002081B3; // add   x3, x1, x2
+        instr_rom[3] = 32'h00312023; // sw    x3, 0(x2)
+        instr_rom[4] = 32'h0000A283; // lw    x5, 0(x1)   (example)
+        instr_rom[5] = 32'h0000006F; // jal x0, 0 (infinite loop)
+    end
+
+    assign instr = instr_rom[pc[31:2]];
+
     memory mem0 (
         .clk(clk),
         .mem_read(1'b0),  
@@ -36,9 +51,6 @@ module cpu (
         .write_data(32'd0),
         .read_data() // not used
     );
-
-    reg [31:0] instr_rom [0:1023];
-    assign instr = instr_rom[pc[31:2]];
 
     // register file
     regfile rf (
@@ -126,8 +138,8 @@ module cpu (
     wire [31:0] wb_from_mem = dmem_read_data;
     wire [31:0] wb_from_pc4 = pc + 4;
     wire [31:0] wb_from_lui = imm; // imm already shifted << 12
-    reg  [31:0] wb_data;
-
+    
+    //reg  [31:0] wb_data;
     //reg  [31:0] rd_from_mem;
 
     always @(*) begin
