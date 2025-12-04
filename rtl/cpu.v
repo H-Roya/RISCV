@@ -28,29 +28,24 @@ module cpu (
     wire        jalr;
     wire        is_lui;
 
+    // writeback temporaries
     reg [31:0] wb_data;
     reg [31:0] rd_from_mem;
 
+    // Instruction ROM (internal program storage)
     reg [31:0] instr_rom [0:1023];
-    initial begin 
+
+    initial begin
         instr_rom[0] = 32'h00500093; // addi x1, x0, 5
         instr_rom[1] = 32'h00300113; // addi x2, x0, 3
         instr_rom[2] = 32'h002081B3; // add   x3, x1, x2
         instr_rom[3] = 32'h00312023; // sw    x3, 0(x2)
-        instr_rom[4] = 32'h0000A283; // lw    x5, 0(x1)   (example)
+        instr_rom[4] = 32'h0000A283; // lw    x5, 0(x1)
         instr_rom[5] = 32'h0000006F; // jal x0, 0 (infinite loop)
     end
 
+    // fetch
     assign instr = instr_rom[pc[31:2]];
-
-    memory mem0 (
-        .clk(clk),
-        .mem_read(1'b0),  
-        .mem_write(1'b0),
-        .addr(32'd0),
-        .write_data(32'd0),
-        .read_data() // not used
-    );
 
     // register file
     regfile rf (
@@ -60,13 +55,12 @@ module cpu (
         .ra1(instr[19:15]), // rs1
         .ra2(instr[24:20]), // rs2
         .wa(instr[11:7]),   // rd
-        .wd( (mem_to_reg) ? /*load data from dmem*/ rd_from_mem : wb_data ),
+        .wd( (mem_to_reg) ? rd_from_mem : wb_data ),
         .rd1(rd1),
         .rd2(rd2)
     );
 
-    // instantiate control and imm_gen
-    wire        dummy_reg_write;
+    // control & imm gen
     wire [31:0] imm_wire;
     control ctrl (
         .instr(instr),
@@ -122,14 +116,14 @@ module cpu (
         (branch_type == 3'd0 && eq)  || // BEQ
         (branch_type == 3'd1 && !eq) || // BNE
         (branch_type == 3'd2 && lt_signed) || // BLT (signed)
-        (branch_type == 3'd3 && !lt_signed && !eq) // BGE (signed) -> not less
+        (branch_type == 3'd3 && !lt_signed && !eq) // BGE (signed)
     );
 
     // Compute next PC
     wire [31:0] pc_next_sequential = pc + 4;
     wire [31:0] pc_branch_target   = pc + imm; // imm for B/J already shifted in imm_gen
     wire [31:0] pc_jalr_target     = (rd1 + imm) & ~32'd1; // low bit = 0
-    wire [31:0] pc_next = (jal) ? pc + imm :
+    wire [31:0] pc_next = (jal) ? (pc + imm) :
                           (jalr) ? pc_jalr_target :
                           (branch_taken ? pc_branch_target : pc_next_sequential);
 
@@ -138,9 +132,6 @@ module cpu (
     wire [31:0] wb_from_mem = dmem_read_data;
     wire [31:0] wb_from_pc4 = pc + 4;
     wire [31:0] wb_from_lui = imm; // imm already shifted << 12
-    
-    //reg  [31:0] wb_data;
-    //reg  [31:0] rd_from_mem;
 
     always @(*) begin
         rd_from_mem = wb_from_mem;
@@ -149,5 +140,19 @@ module cpu (
         else if (jal || jalr) wb_data = wb_from_pc4;
         else wb_data = wb_from_alu;
     end
+
+    // PC update (clocked)
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            pc <= 32'd0;
+        end else begin
+            pc <= pc_next;
+        end
+    end
+
+    // drive outputs for debug
+    assign pc_out      = pc;
+    assign instr_out   = instr;
+    assign alu_res_out = alu_res;
 
 endmodule

@@ -12,6 +12,16 @@ module top_single (
     reg [31:0] instr_rom [0:1023];
     wire [31:0] instr = instr_rom[pc[31:2]];
 
+    initial begin
+        instr_rom[0] = 32'h00500093;
+        instr_rom[1] = 32'h00300113;
+        instr_rom[2] = 32'h002081B3;
+        instr_rom[3] = 32'h00312023;
+        instr_rom[4] = 32'h0000A283;
+        instr_rom[5] = 32'h0000006F;
+    end
+
+
     // Control / imm
     wire        reg_write;
     wire        mem_read;
