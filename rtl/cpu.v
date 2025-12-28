@@ -32,16 +32,16 @@ module cpu (
     reg [31:0] wb_data;
     reg [31:0] rd_from_mem;
 
-    // Instruction ROM (internal program storage)
+    //Instruction ROM (internal program storage)
     reg [31:0] instr_rom [0:1023];
 
-    initial begin
-        instr_rom[0] = 32'h00500093; // addi x1, x0, 5
-        instr_rom[1] = 32'h00300113; // addi x2, x0, 3
-        instr_rom[2] = 32'h002081B3; // add   x3, x1, x2
-        instr_rom[3] = 32'h00312023; // sw    x3, 0(x2)
-        instr_rom[4] = 32'h0000A283; // lw    x5, 0(x1)
-        instr_rom[5] = 32'h0000006F; // jal x0, 0 (infinite loop)
+    initial begin //SiMULASiYA KODLARI 
+        instr_rom[0] = 32'h00500093; //addi x1, x0, 5
+        instr_rom[1] = 32'h00300113; //addi x2, x0, 3
+        instr_rom[2] = 32'h002081B3; //add x3, x1, x2
+        instr_rom[3] = 32'h00312023; //sw x3, 0(x2)
+        instr_rom[4] = 32'h0000A283; //lw x5, 0(x1)
+        instr_rom[5] = 32'h0000006F; //jal x0, 0 (sonsuz döngü)
     end
 
     // fetch
