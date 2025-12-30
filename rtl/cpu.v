@@ -3,7 +3,8 @@ module cpu (
     input  wire        reset,
     output wire [31:0] pc_out,     // for debug
     output wire [31:0] instr_out,  // for debug
-    output wire [31:0] alu_res_out // for debug
+    output wire [31:0] alu_res_out, // for debug
+    output wire [31:0] wb_data_out //for debug
 );
     // internal signals
     reg  [31:0] pc;
@@ -35,14 +36,97 @@ module cpu (
     //Instruction ROM (internal program storage)
     reg [31:0] instr_rom [0:1023];
 
-    initial begin //SiMULASiYA KODLARI 
+    initial begin
+        // ===============================
+        // Immediate ALU instructions
+        // ===============================
+
+        instr_rom[0]  = 32'h00500093; // addi x1, x0, 5
+        instr_rom[1]  = 32'h00A00113; // addi x2, x0, 10
+        instr_rom[2]  = 32'h00308193; // addi x3, x1, 3   (x3 = 8)
+
+        instr_rom[3]  = 32'h0020F213; // andi x4, x1, 2   (5 & 2 = 0)
+        instr_rom[4]  = 32'h0020E293; // ori  x5, x1, 2   (5 | 2 = 7)
+        instr_rom[5]  = 32'h0030C313; // xori x6, x1, 3   (5 ^ 3 = 6)
+
+        instr_rom[6]  = 32'h00109193; // slli x3, x1, 1   (5 << 1 = 10)
+        instr_rom[7]  = 32'h00115213; // srli x4, x2, 1   (10 >> 1 = 5)
+        instr_rom[8]  = 32'h40115293; // srai x5, x2, 1   (arith shift)
+
+        instr_rom[9]  = 32'h0020A313; // slti x6, x1, 2   (5 < 2 ? 0)
+        instr_rom[10] = 32'h0060B393; // sltiu x7, x1, 6  (5 < 6 ? 1)
+
+        // ===============================
+        // Register-register ALU ops
+        // ===============================
+
+        instr_rom[11] = 32'h002081B3; // add  x3, x1, x2  (5 + 10 = 15)
+        instr_rom[12] = 32'h40208233; // sub  x4, x1, x2  (5 - 10 = -5)
+        instr_rom[13] = 32'h0020F2B3; // and  x5, x1, x2
+        instr_rom[14] = 32'h0020E333; // or   x6, x1, x2
+        instr_rom[15] = 32'h0020C3B3; // xor  x7, x1, x2
+
+        instr_rom[16] = 32'h00209433; // sll  x8, x1, x2[4:0]
+        instr_rom[17] = 32'h0020D4B3; // srl  x9, x1, x2
+        instr_rom[18] = 32'h4020D533; // sra  x10, x1, x2
+
+        instr_rom[19] = 32'h0020A5B3; // slt  x11, x1, x2
+        instr_rom[20] = 32'h0020B633; // sltu x12, x1, x2
+
+        // ===============================
+        // Memory operations
+        // ===============================
+
+        instr_rom[21] = 32'h00312023; // sw x3, 0(x2)   (store 15)
+        instr_rom[22] = 32'h00012183; // lw x3, 0(x2)   (load back 15)
+
+        // ===============================
+        // Branch instructions
+        // ===============================
+
+        instr_rom[23] = 32'h00208463; // beq x1, x2, +8 (not taken)
+        instr_rom[24] = 32'h00100193; // addi x3, x0, 1 (executed)
+
+        instr_rom[25] = 32'h00109463; // bne x1, x1, +8 (not taken)
+        instr_rom[26] = 32'h00200193; // addi x3, x0, 2
+
+        instr_rom[27] = 32'h0020C463; // blt x1, x2, +8 (taken)
+        instr_rom[28] = 32'h00300193; // addi x3, x0, 3 (skipped)
+
+        instr_rom[29] = 32'h0020D463; // bge x2, x1, +8 (taken)
+        instr_rom[30] = 32'h00400193; // addi x3, x0, 4 (skipped)
+
+        // ===============================
+        // LUI
+        // ===============================
+
+        instr_rom[31] = 32'h123450B7; // lui x1, 0x12345
+
+        // ===============================
+        // Jumps
+        // ===============================
+
+        instr_rom[32] = 32'h004000EF; // jal x1, +4
+        instr_rom[33] = 32'h00500113; // addi x2, x0, 5
+
+        //instr_rom[34] = 32'h00008067; // jalr x0, 0(x1)
+
+        // ===============================
+        // End (infinite loop)
+        // ===============================
+
+        instr_rom[34] = 32'h0000006F; // jal x0, 0 (halt)
+    end
+
+
+    /*initial begin //SiMULASiYA KODLARI 
         instr_rom[0] = 32'h00500093; //addi x1, x0, 5
         instr_rom[1] = 32'h00300113; //addi x2, x0, 3
         instr_rom[2] = 32'h002081B3; //add x3, x1, x2
         instr_rom[3] = 32'h00312023; //sw x3, 0(x2)
         instr_rom[4] = 32'h0000A283; //lw x5, 0(x1)
         instr_rom[5] = 32'h0000006F; //jal x0, 0 (sonsuz döngü)
-    end
+    end*/
 
     // fetch
     assign instr = instr_rom[pc[31:2]];
@@ -154,5 +238,6 @@ module cpu (
     assign pc_out      = pc;
     assign instr_out   = instr;
     assign alu_res_out = alu_res;
+    assign wb_data_out = wb_data;
 
 endmodule
