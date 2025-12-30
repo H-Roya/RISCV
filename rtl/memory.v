@@ -26,6 +26,5 @@ module memory #(
             mem[word_addr] <= write_data;
         end
     end
-
-    // example values can be loaded from TB
+    
 endmodule
