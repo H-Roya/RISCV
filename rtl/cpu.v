@@ -49,7 +49,6 @@ module cpu (
 
     initial begin
         // Immediate ALU instructions
-
         instr_rom[0]  = 32'h00500093; // addi x1, x0, 5
         instr_rom[1]  = 32'h00A00113; // addi x2, x0, 10
         instr_rom[2]  = 32'h00308193; // addi x3, x1, 3   (x3 = 8)
@@ -86,7 +85,6 @@ module cpu (
         instr_rom[22] = 32'h00012183; // lw x3, 0(x2)   (load back 15)
 
         // Branch instructions
-
         instr_rom[23] = 32'h00208463; // beq x1, x2, +8 (not taken)
         instr_rom[24] = 32'h00100193; // addi x3, x0, 1 (executed)
 
@@ -99,26 +97,46 @@ module cpu (
         instr_rom[29] = 32'h0020D463; // bge x2, x1, +8 (taken)
         instr_rom[30] = 32'h00400193; // addi x3, x0, 4 (skipped)
 
+        //BLTU
+        // Prepare registers
+        instr_rom[31] = 32'hFFF00093; // addi x1, x0, -1   (x1 = 0xFFFFFFFF)
+        instr_rom[32] = 32'h00100113; // addi x2, x0, 1
+
+        // BLTU should NOT be taken (unsigned: 0xFFFFFFFF > 1)
+        instr_rom[33] = 32'h0020E463; // bltu x1, x2, +8
+        instr_rom[34] = 32'h00100293; // addi x5, x0, 1   <-- SHOULD EXECUTE
+        // If branch was wrongly taken, this runs instead
+        instr_rom[35] = 32'h00200293; // addi x5, x0, 2
+
+
         // LUI
 
-        instr_rom[31] = 32'h123450B7; // lui x1, 0x12345
+        instr_rom[36] = 32'h123450B7; // lui x1, 0x12345
 
         // Jumps
 
-        instr_rom[32] = 32'h004000EF; // jal x1, +4
-        instr_rom[33] = 32'h00500113; // addi x2, x0, 5
+        instr_rom[37] = 32'h004000EF; // jal x1, +4
+        instr_rom[38] = 32'h00500113; // addi x2, x0, 5
 
         // AUIPC
-        instr_rom[34] = 32'h00001297; // auipc x5, 0x1  (x5 = pc + 0x1000)
-
+        instr_rom[39] = 32'h00001297; // auipc x5, 0x1  (x5 = pc + 0x1000)
         // Byte/Half loads
-        instr_rom[35] = 32'h00010283; // lb  x5, 0(x2)
-        instr_rom[36] = 32'h00014303; // lbu x6, 0(x2)
-        instr_rom[37] = 32'h00011383; // lh  x7, 0(x2)
-        instr_rom[38] = 32'h00015403; // lhu x8, 0(x2)
+        instr_rom[40] = 32'h00010283; // lb  x5, 0(x2)
+        instr_rom[41] = 32'h00014303; // lbu x6, 0(x2)
+        instr_rom[42] = 32'h00011383; // lh  x7, 0(x2)
+        instr_rom[43] = 32'h00015403; // lhu x8, 0(x2)
+
+        // Testing Loads/Stores with larger values
+        instr_rom[44] = 32'h87654337; // lui x6, 0x87654
+        instr_rom[45] = 32'h32130313; // addi x6, x6, 0x321 (x6 = 0x87654321)
+        instr_rom[46] = 32'h00612423; // sw x6, 8(x2)  (store 0x87654321 at address 18)
+        instr_rom[47] = 32'h00814503; // lb x10, 8(x2) (load byte = 0x21 = 33 decimal)
+        instr_rom[48] = 32'h00814583; // lbu x11, 8(x2) (load unsigned byte = 0x21)
+        instr_rom[49] = 32'h00811603; // lh x12, 8(x2) (load halfword = 0x4321)
+        instr_rom[50] = 32'h00815683; // lhu x13, 8(x2) (load unsigned halfword = 0x4321)
 
         // End (infinite loop)
-        instr_rom[39] = 32'h0000006F; // jal x0, 0 (halt)
+        instr_rom[51] = 32'h0000006F; // jal x0, 0 (halt)
     end
 
     // fetch

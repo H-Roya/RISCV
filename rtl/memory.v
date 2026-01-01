@@ -11,6 +11,12 @@ module memory #(
 
     reg [7:0] mem [0:MEM_BYTES-1];
 
+    integer i;
+    initial begin
+        for (i = 0; i < MEM_BYTES; i = i + 1)
+            mem[i] = 8'd0;
+    end
+
     // Read combinationally 32-bit word little-endian
     always @(*) begin
         if (mem_read) begin
@@ -34,12 +40,5 @@ module memory #(
             mem[addr + 3] <= write_data[31:24];
         end
     end
-
-    /*integer i;
-    initial begin
-        for (i = 0; i < MEM_BYTES; i = i + 1)
-            mem[i] = 8'd0;
-    end*/
-
 
 endmodule
