@@ -28,6 +28,8 @@ module cpu (
     wire        jal;
     wire        jalr;
     wire        is_lui;
+    wire [2:0] load_type;
+    wire is_auipc;
 
     // writeback temporaries
     reg [31:0] wb_data;
@@ -35,6 +37,15 @@ module cpu (
 
     //Instruction ROM (internal program storage)
     reg [31:0] instr_rom [0:1023];
+
+    //Writeback formatting for loads
+    reg [31:0] load_data;
+
+    wire [1:0] byte_offset = alu_res[1:0];
+    wire       half_offset = alu_res[1];
+
+    reg [7:0]  byte_val;
+    reg [15:0] half_val;
 
     initial begin
         // Immediate ALU instructions
@@ -97,9 +108,17 @@ module cpu (
         instr_rom[32] = 32'h004000EF; // jal x1, +4
         instr_rom[33] = 32'h00500113; // addi x2, x0, 5
 
-        // End (infinite loop)
+        // AUIPC
+        instr_rom[34] = 32'h00001297; // auipc x5, 0x1  (x5 = pc + 0x1000)
 
-        instr_rom[34] = 32'h0000006F; // jal x0, 0 (halt)
+        // Byte/Half loads
+        instr_rom[35] = 32'h00010283; // lb  x5, 0(x2)
+        instr_rom[36] = 32'h00014303; // lbu x6, 0(x2)
+        instr_rom[37] = 32'h00011383; // lh  x7, 0(x2)
+        instr_rom[38] = 32'h00015403; // lhu x8, 0(x2)
+
+        // End (infinite loop)
+        instr_rom[39] = 32'h0000006F; // jal x0, 0 (halt)
     end
 
     // fetch
@@ -133,7 +152,9 @@ module cpu (
         .branch_type(branch_type),
         .jal(jal),
         .jalr(jalr),
-        .is_lui(is_lui)
+        .is_lui(is_lui),
+        .is_auipc(is_auipc),
+        .load_type(load_type)
     );
 
     imm_gen ig (
@@ -146,7 +167,7 @@ module cpu (
 
     // data memory instance (for loads/stores)
     wire [31:0] dmem_read_data;
-    memory #(.MEM_WORDS(1024)) dmem (
+    memory #(.MEM_BYTES(4096)) dmem (
         .clk(clk),
         .mem_read(mem_read),
         .mem_write(mem_write),
@@ -169,13 +190,19 @@ module cpu (
     );
 
     // Branch decision logic
+
+    wire lt_unsigned = (rd1 < rd2);
+
     wire branch_taken;
     assign branch_taken = branch && (
-        (branch_type == 3'd0 && eq)  || // BEQ
-        (branch_type == 3'd1 && !eq) || // BNE
-        (branch_type == 3'd2 && lt_signed) || // BLT (signed)
-        (branch_type == 3'd3 && !lt_signed && !eq) // BGE (signed)
+        (branch_type == 3'd0  && eq) ||
+        (branch_type == 3'd1  && !eq) ||
+        (branch_type == 3'd2  && lt_signed) ||
+        (branch_type == 3'd3  && !lt_signed && !eq) ||
+        (branch_type == 3'd4 && lt_unsigned) ||
+        (branch_type == 3'd5 && !lt_unsigned)
     );
+
 
     // Compute next PC
     wire [31:0] pc_next_sequential = pc + 4;
@@ -191,14 +218,6 @@ module cpu (
     wire [31:0] wb_from_pc4 = pc + 4;
     wire [31:0] wb_from_lui = imm; // imm already shifted << 12
 
-    always @(*) begin
-        rd_from_mem = wb_from_mem;
-        if (is_lui) wb_data = wb_from_lui;
-        else if (mem_to_reg) wb_data = wb_from_mem;
-        else if (jal || jalr) wb_data = wb_from_pc4;
-        else wb_data = wb_from_alu;
-    end
-
     // PC update (clocked)
     always @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -206,6 +225,59 @@ module cpu (
         end else begin
             pc <= pc_next;
         end
+    end
+
+    // Extraction logic
+
+    always @(*) begin
+        // defaults (important to avoid X)
+        byte_val = 8'd0;
+        half_val = 16'd0;
+
+        case (byte_offset)
+            2'd0: begin
+                byte_val = dmem_read_data[7:0];
+                half_val = dmem_read_data[15:0];
+            end
+            2'd1: begin
+                byte_val = dmem_read_data[15:8];
+                half_val = dmem_read_data[23:8];
+            end
+            2'd2: begin
+                byte_val = dmem_read_data[23:16];
+                half_val = dmem_read_data[31:16];
+            end
+            2'd3: begin
+                byte_val = dmem_read_data[31:24];
+                half_val = dmem_read_data[31:16]; // unaligned
+            end
+        endcase
+    end
+
+
+
+    // Writeback formatting for loads
+
+    always @(*) begin
+        case (load_type)
+            3'd0: load_data = {{24{byte_val[7]}},  byte_val}; // LB
+            3'd1: load_data = {{16{half_val[15]}}, half_val}; // LH
+            3'd2: load_data = dmem_read_data;                 // LW
+            3'd3: load_data = {24'd0, byte_val};              // LBU
+            3'd4: load_data = {16'd0, half_val};              // LHU
+            default: load_data = dmem_read_data;
+        endcase
+    end
+
+
+    wire [31:0] wb_from_pc_imm = pc + imm;
+
+    always @(*) begin
+        if (is_lui) wb_data = imm;
+        else if (is_auipc) wb_data = wb_from_pc_imm;
+        else if (mem_to_reg) wb_data = load_data;
+        else if (jal || jalr) wb_data = pc + 4;
+        else wb_data = alu_res;
     end
 
     // drive outputs for debug

@@ -11,7 +11,9 @@ module control (
     output reg [2:0]   branch_type, // encodes BEQ/BNE/BLT/BGE 
     output reg         jal,
     output reg         jalr,
-    output reg         is_lui
+    output reg         is_lui,
+    output reg         is_auipc,
+    output reg [2:0]   load_type
 );
     wire [6:0] opcode = instr[6:0];
     wire [2:0] funct3 = instr[14:12];
@@ -36,6 +38,12 @@ module control (
     localparam OP_SLT  = 4'h8;
     localparam OP_SLTU = 4'h9;
 
+    localparam LOAD_LB  = 3'd0;
+    localparam LOAD_LH  = 3'd1;
+    localparam LOAD_LW  = 3'd2;
+    localparam LOAD_LBU = 3'd3;
+    localparam LOAD_LHU = 3'd4;
+
     always @(*) begin
         // defaults
         reg_write  = 0;
@@ -50,6 +58,8 @@ module control (
         jal        = 0;
         jalr       = 0;
         is_lui     = 0;
+        is_auipc   = 0;
+        load_type  = LOAD_LW;   
 
         case (opcode)
             7'b0110011: begin // R-type
@@ -95,6 +105,15 @@ module control (
                 alu_src    = 1;
                 imm_sel    = 3'd0; // I-type
                 alu_op     = OP_ADD; // address = rs1 + imm
+
+                case (funct3)
+                    3'b000: load_type = LOAD_LB;  // LB
+                    3'b001: load_type = LOAD_LH;  // LH
+                    3'b010: load_type = LOAD_LW;  // LW
+                    3'b100: load_type = LOAD_LBU; // LBU
+                    3'b101: load_type = LOAD_LHU; // LHU
+                    default: load_type = LOAD_LW;
+                endcase
             end
             7'b0100011: begin // SW
                 mem_write = 1;
@@ -133,6 +152,11 @@ module control (
             7'b0110111: begin // LUI
                 reg_write = 1;
                 is_lui    = 1;
+                imm_sel   = 3'd3; // U-type
+            end
+            7'b0010111: begin // AUIPC
+                reg_write = 1;
+                is_auipc  = 1;
                 imm_sel   = 3'd3; // U-type
             end
             default: begin
