@@ -135,7 +135,8 @@ module control (
                     default: branch_type = BEQ;
                 endcase
                 // for branches using ALU subtract and comparators
-                alu_op = OP_SUB;
+                //alu_op = OP_SUB;
+                alu_op = OP_ADD;
             end
             7'b1101111: begin // JAL
                 reg_write = 1;
