@@ -1,7 +1,7 @@
 module regfile (
     input  wire        clk,
     input  wire        reset,
-    input  wire        we,       // write enable
+    input  wire        we,       //write enable
     input  wire [4:0]  ra1,
     input  wire [4:0]  ra2,
     input  wire [4:0]  wa,

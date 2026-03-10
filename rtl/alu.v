@@ -1,10 +1,10 @@
 module alu(
     input  wire [31:0] a,
     input  wire [31:0] b,
-    input  wire [3:0]  alu_op,   // encoded ALU operation
+    input  wire [3:0]  alu_op,   //encoded ALU operation
     output reg  [31:0] result,
-    output wire        eq,       // a == b
-    output wire        lt_signed // a < b (signed)
+    output wire        eq,       //a == b
+    output wire        lt_signed //a < b (signed)
 );
 
     localparam OP_ADD  = 4'h0;
@@ -15,8 +15,8 @@ module alu(
     localparam OP_SLL  = 4'h5;
     localparam OP_SRL  = 4'h6;
     localparam OP_SRA  = 4'h7;
-    localparam OP_SLT  = 4'h8; // signed set less than
-    localparam OP_SLTU = 4'h9; // unsigned set less than
+    localparam OP_SLT  = 4'h8; //signed set less than
+    localparam OP_SLTU = 4'h9; //unsigned set less than
 
     always @(*) begin
         case (alu_op)

@@ -1,10 +1,10 @@
 module memory #(
-    parameter MEM_BYTES = 4096   // 4 KB memory
+    parameter MEM_BYTES = 4096   //4 KB memory
 )(
     input  wire        clk,
     input  wire        mem_read,
     input  wire        mem_write,
-    input  wire [31:0] addr,        // byte address
+    input  wire [31:0] addr,        //byte address
     input  wire [31:0] write_data,
     output reg  [31:0] read_data
 );
@@ -17,7 +17,7 @@ module memory #(
             mem[i] = 8'd0;
     end
 
-    // Read combinationally 32-bit word little-endian
+    //Read combinationally 32-bit word little-endian
     always @(*) begin
         if (mem_read) begin
             read_data = {
@@ -31,7 +31,7 @@ module memory #(
         end
     end
 
-    // Write synchronously
+    //Write synchronously
     always @(posedge clk) begin
         if (mem_write) begin
             mem[addr + 0] <= write_data[7:0];
